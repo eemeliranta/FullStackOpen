@@ -1,6 +1,7 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect  } from 'react'
 import ReactDOM from 'react-dom'
 
+import axios from 'axios'
 
 const FilterForm = (props) => {
   return (
@@ -15,7 +16,7 @@ const AddNewPersonForm = (props) => {
     <div>
       <h2>Add new</h2>
       <form onSubmit={props.addPerson}>
-        <div>name: <input value={props.newName} onChange={props.andleNameChange} /></div>
+        <div>name: <input value={props.newName} onChange={props.handleNameChange} /></div>
         <div>number: <input value={props.newNumber} onChange={props.handleNumberChange} /></div>
         <div><button type="submit">add</button></div>
       </form>
@@ -35,28 +36,24 @@ const DisplayNumbers = (props) => {
 }
 
 const App = () => {
-  const [persons, setPersons] = useState([
-    { name: 'Arto Hellas', number: '040-123456' },
-    { name: 'Ada Lovelace', number: '39-44-5323523' },
-    { name: 'Dan Abramov', number: '12-43-234345' },
-    { name: 'Mary Poppendieck', number: '39-23-6423122' }
-  ])
+  const [persons, setPersons] = useState([])
+  useEffect(() => {
+    axios
+      .get('http://localhost:3001/persons')
+      .then(response => {
+        setPersons(response.data)
+      })
+  }, [])
 
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [personFilter, setPersonFilter] = useState('')
 
-  const handleNameChange = (event) => {
-    setNewName(event.target.value)
-  }
+  const handleNameChange = (event) => {setNewName(event.target.value)}
 
-  const handleNumberChange = (event) => {
-    setNewNumber(event.target.value)
-  }
+  const handleNumberChange = (event) => {setNewNumber(event.target.value)}
 
-  const handleFilterChange = (event) => {
-    setPersonFilter(event.target.value)
-  }
+  const handleFilterChange = (event) => {setPersonFilter(event.target.value)}
 
   const addPerson = (event) => {
     event.preventDefault()
@@ -74,7 +71,7 @@ const App = () => {
       setNewNumber('')
     }
   }
-
+  
   const rows = () => persons.filter(person => person.name.toLowerCase().search(personFilter) >= 0).map(person =>
     <li key={person.name} > {person.name} {person.number}</li>
   )
