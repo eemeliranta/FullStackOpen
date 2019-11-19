@@ -1,7 +1,7 @@
 import React, { useState, useEffect  } from 'react'
 import ReactDOM from 'react-dom'
 
-import axios from 'axios'
+import phonebook from './services/phonebook.js'
 
 const FilterForm = (props) => {
   return (
@@ -38,10 +38,10 @@ const DisplayNumbers = (props) => {
 const App = () => {
   const [persons, setPersons] = useState([])
   useEffect(() => {
-    axios
-      .get('http://localhost:3001/persons')
-      .then(response => {
-        setPersons(response.data)
+    phonebook
+      .getAll()
+        .then(initialPersons => {
+          setPersons(initialPersons)
       })
   }, [])
 
@@ -57,23 +57,44 @@ const App = () => {
 
   const addPerson = (event) => {
     event.preventDefault()
-    const personObject = {
+    const newPerson = {
       name: newName,
       number: newNumber,
     }
 
     if (persons.filter(person => person.name === newName).length > 0) {
-      alert(newName + ' is already added to phonebook')
+      if(window.confirm(newName+" is already in the phonebook, replace old number with a new one?")){
+        phonebook
+        .update(persons.find(person => person.name === newName).id, newPerson)
+        .then(response => {
+          setPersons(persons.map(n => n.name !== newPerson.name ? n : newPerson))
+          console.log(persons)
+        })
+      }
     }
     else {
-      setPersons(persons.concat(personObject))
-      setNewName('')
-      setNewNumber('')
+      phonebook
+      .create(newPerson)
+      .then(response => {
+        setPersons(persons.concat(response))
+        setNewName('')
+        setNewNumber('')
+      })
+    }
+  }
+
+  const deletePerson = (person) => {
+    if(window.confirm("Are you sure you want to delete "+person.name+"?")){
+      phonebook
+      .remove(person.id)
+      .then(response => {
+        setPersons(persons.filter(n => n.id !== person.id))
+      })
     }
   }
   
   const rows = () => persons.filter(person => person.name.toLowerCase().search(personFilter) >= 0).map(person =>
-    <li key={person.name} > {person.name} {person.number}</li>
+    <li key={person.name} > {person.name} {person.number} <button onClick={() => deletePerson(person)} >delete</button></li>
   )
 
   return (
